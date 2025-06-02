@@ -1,0 +1,28 @@
+[Unit]
+Description=Ping Monitor Service
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/ping-monitor
+ExecStart=/usr/bin/python3 /opt/ping-monitor/web_interface.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Umgebungsvariablen
+Environment=PYTHONPATH=/opt/ping-monitor
+Environment=FLASK_ENV=production
+
+# Sicherheitseinstellungen
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/ping-monitor
+
+[Install]
+WantedBy=multi-user.target

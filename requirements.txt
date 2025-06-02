@@ -1,0 +1,7 @@
+# Ping Monitor Abhängigkeiten
+Flask>=2.3.0,<3.0.0
+Werkzeug>=2.3.0,<3.0.0
+
+# Optionale Abhängigkeiten für erweiterte Features
+# smtplib (für E-Mail-Benachrichtigungen) - bereits in Python enthalten
+# sqlite3 (für Datenbank) - bereits in Python enthalten
