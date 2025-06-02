@@ -354,7 +354,21 @@
 
         <div class="logs-section">
             <div class="logs-header">
-                <h3 class="logs-title">Recent Events</h3>
+                <h3 class="logs-title">Packet Loss Events</h3>
+                <span id="eventCount" class="metric-subtitle">0 events today</span>
+            </div>
+            <div id="packetLossEvents">
+                <div class="log-entry">
+                    <span class="log-timestamp">--:--</span>
+                    <div class="log-status"></div>
+                    <span class="log-message">No packet loss events</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="logs-section" style="margin-top: 20px;">
+            <div class="logs-header">
+                <h3 class="logs-title">System Events</h3>
             </div>
             <div id="logEntries">
                 <div class="log-entry">
@@ -544,6 +558,56 @@
             }
         }
 
+        function updatePacketLossEvents(events) {
+            const eventsContainer = document.getElementById('packetLossEvents');
+            const eventCount = document.getElementById('eventCount');
+            
+            eventsContainer.innerHTML = '';
+            
+            if (events.length === 0) {
+                eventsContainer.innerHTML = `
+                    <div class="log-entry">
+                        <span class="log-timestamp">--:--</span>
+                        <div class="log-status"></div>
+                        <span class="log-message">No packet loss events</span>
+                    </div>
+                `;
+                eventCount.textContent = '0 events today';
+                return;
+            }
+            
+            eventCount.textContent = `${events.length} events today`;
+            
+            events.slice(0, 10).forEach(event => {
+                const startTime = new Date(event.start_time).toLocaleTimeString();
+                const endTime = event.end_time ? new Date(event.end_time).toLocaleTimeString() : 'ongoing';
+                const duration = event.duration_seconds ? `${event.duration_seconds}s` : 'ongoing';
+                
+                const eventEntry = document.createElement('div');
+                eventEntry.className = 'log-entry';
+                eventEntry.innerHTML = `
+                    <span class="log-timestamp">${startTime}</span>
+                    <div class="log-status error"></div>
+                    <span class="log-message">
+                        ${event.host}: ${event.consecutive_failures} failures, ${duration}
+                        ${event.is_active ? ' (ACTIVE)' : ''}
+                    </span>
+                `;
+                
+                eventsContainer.appendChild(eventEntry);
+            });
+        }
+
+        async function fetchPacketLossEvents() {
+            try {
+                const response = await fetch('/api/packet-loss-events?hours=24');
+                const data = await response.json();
+                updatePacketLossEvents(data.events);
+            } catch (error) {
+                console.error('Failed to fetch packet loss events:', error);
+            }
+        }
+
         function showUpdateIndicator() {
             const indicator = document.getElementById('updateIndicator');
             indicator.classList.add('show');
@@ -582,7 +646,11 @@
         // Initialize
         addLogEntry('Network monitor started');
         fetchData();
+        fetchPacketLossEvents();
+        
+        // Update intervals
         setInterval(fetchData, 2000);
+        setInterval(fetchPacketLossEvents, 10000); // Update packet loss events every 10 seconds
     </script>
 </body>
 </html>

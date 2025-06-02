@@ -36,6 +36,10 @@ class PingMonitor:
         self.failed_pings = 0
         self.recent_pings = deque(maxlen=Config.MAX_RECENT_PINGS)
         
+        # Packet Loss Event Tracking
+        self.current_loss_event = None
+        self.consecutive_failures = 0
+        
         # Setup logging
         log_level = getattr(logging, Config.LOG_LEVEL.upper())
         logging.basicConfig(
@@ -80,6 +84,18 @@ class PingMonitor:
                     failed_pings INTEGER,
                     packet_loss_percent REAL,
                     current_host TEXT
+                )
+            ''')
+            
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS packet_loss_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    start_time DATETIME NOT NULL,
+                    end_time DATETIME,
+                    host TEXT NOT NULL,
+                    consecutive_failures INTEGER,
+                    duration_seconds INTEGER,
+                    is_active BOOLEAN DEFAULT 1
                 )
             ''')
             
@@ -169,9 +185,79 @@ class PingMonitor:
         except Exception as e:
             self.logger.error(f"Fehler beim Speichern der Statistiken: {e}")
     
+    def start_packet_loss_event(self):
+        """Startet ein neues Packet Loss Event"""
+        if self.current_loss_event is None:
+            self.current_loss_event = {
+                'start_time': datetime.now(),
+                'host': self.current_host,
+                'consecutive_failures': 1
+            }
+            
+            try:
+                conn = sqlite3.connect(self.db_path)
+                cursor = conn.cursor()
+                
+                cursor.execute('''
+                    INSERT INTO packet_loss_events (start_time, host, consecutive_failures)
+                    VALUES (?, ?, ?)
+                ''', (self.current_loss_event['start_time'], self.current_loss_event['host'], 1))
+                
+                self.current_loss_event['id'] = cursor.lastrowid
+                conn.commit()
+                conn.close()
+                
+                self.logger.warning(f"Packet Loss Event gestartet für {self.current_host}")
+            except Exception as e:
+                self.logger.error(f"Fehler beim Starten des Packet Loss Events: {e}")
+    
+    def update_packet_loss_event(self):
+        """Aktualisiert das aktuelle Packet Loss Event"""
+        if self.current_loss_event:
+            self.current_loss_event['consecutive_failures'] += 1
+            
+            try:
+                conn = sqlite3.connect(self.db_path)
+                cursor = conn.cursor()
+                
+                cursor.execute('''
+                    UPDATE packet_loss_events 
+                    SET consecutive_failures = ?
+                    WHERE id = ?
+                ''', (self.current_loss_event['consecutive_failures'], self.current_loss_event['id']))
+                
+                conn.commit()
+                conn.close()
+            except Exception as e:
+                self.logger.error(f"Fehler beim Aktualisieren des Packet Loss Events: {e}")
+    
+    def end_packet_loss_event(self):
+        """Beendet das aktuelle Packet Loss Event"""
+        if self.current_loss_event:
+            end_time = datetime.now()
+            duration = (end_time - self.current_loss_event['start_time']).total_seconds()
+            
+            try:
+                conn = sqlite3.connect(self.db_path)
+                cursor = conn.cursor()
+                
+                cursor.execute('''
+                    UPDATE packet_loss_events 
+                    SET end_time = ?, duration_seconds = ?, is_active = 0
+                    WHERE id = ?
+                ''', (end_time, int(duration), self.current_loss_event['id']))
+                
+                conn.commit()
+                conn.close()
+                
+                self.logger.info(f"Packet Loss Event beendet. Dauer: {duration:.1f}s, Failures: {self.current_loss_event['consecutive_failures']}")
+            except Exception as e:
+                self.logger.error(f"Fehler beim Beenden des Packet Loss Events: {e}")
+            
+            self.current_loss_event = None
+    
     def monitor_loop(self):
         """Hauptschleife für das Ping-Monitoring"""
-        consecutive_failures = 0
         
         while self.running:
             start_time = time.time()
@@ -190,17 +276,31 @@ class PingMonitor:
             }
             
             if success:
-                consecutive_failures = 0
+                # Erfolgreicher Ping - beende aktuelles Packet Loss Event falls vorhanden
+                if self.current_loss_event:
+                    self.end_packet_loss_event()
+                self.consecutive_failures = 0
                 self.logger.info(f"Ping erfolgreich: {self.current_host} - {response_time}ms")
             else:
+                # Fehlgeschlagener Ping
                 self.failed_pings += 1
-                consecutive_failures += 1
-                self.logger.warning(f"Ping fehlgeschlagen: {self.current_host}")
+                self.consecutive_failures += 1
+                
+                # Packet Loss Event Management
+                if self.current_loss_event:
+                    self.update_packet_loss_event()
+                else:
+                    self.start_packet_loss_event()
+                
+                self.logger.warning(f"Ping fehlgeschlagen: {self.current_host} (Consecutive: {self.consecutive_failures})")
                 
                 # Nach X aufeinanderfolgenden Fehlern zum anderen Host wechseln
-                if consecutive_failures >= self.failover_threshold:
+                if self.consecutive_failures >= self.failover_threshold:
                     self.switch_host()
-                    consecutive_failures = 0
+                    # Beende aktuelles Event da wir den Host wechseln
+                    if self.current_loss_event:
+                        self.end_packet_loss_event()
+                    self.consecutive_failures = 0
             
             # Ergebnis speichern
             self.recent_pings.append(ping_result)
@@ -235,11 +335,18 @@ class PingMonitor:
     
     def get_current_stats(self):
         """Gibt aktuelle Statistiken zurück"""
+        # Berechne durchschnittliche Response Time der letzten erfolgreichen Pings
+        recent_successful_pings = [p for p in self.recent_pings if p['success'] and p['response_time'] is not None]
+        avg_response_time = 0
+        if recent_successful_pings:
+            avg_response_time = sum(p['response_time'] for p in recent_successful_pings) / len(recent_successful_pings)
+        
         return {
             'total_pings': self.total_pings,
             'failed_pings': self.failed_pings,
             'packet_loss_percent': self.calculate_packet_loss(),
             'current_host': self.current_host,
+            'avg_response_time': round(avg_response_time, 2),
             'recent_pings': list(self.recent_pings)[-100:],  # Letzte 100 Pings
             'uptime': datetime.now().isoformat()
         }

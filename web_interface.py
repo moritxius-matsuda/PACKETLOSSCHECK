@@ -38,6 +38,46 @@ def api_stats():
     else:
         return jsonify({'error': 'Monitor nicht aktiv'}), 500
 
+@app.route('/api/packet-loss-events')
+def api_packet_loss_events():
+    """API-Endpunkt für Packet Loss Events"""
+    hours = request.args.get('hours', 24, type=int)
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Packet Loss Events der letzten X Stunden abrufen
+        cursor.execute('''
+            SELECT id, start_time, end_time, host, consecutive_failures, 
+                   duration_seconds, is_active
+            FROM packet_loss_events 
+            WHERE start_time >= datetime('now', '-{} hours')
+            ORDER BY start_time DESC
+        '''.format(hours))
+        
+        events = []
+        for row in cursor.fetchall():
+            event = {
+                'id': row['id'],
+                'start_time': row['start_time'],
+                'end_time': row['end_time'],
+                'host': row['host'],
+                'consecutive_failures': row['consecutive_failures'],
+                'duration_seconds': row['duration_seconds'],
+                'is_active': bool(row['is_active'])
+            }
+            events.append(event)
+        
+        conn.close()
+        return jsonify({
+            'events': events,
+            'total_events': len(events)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/history')
 def api_history():
     """API-Endpunkt für historische Daten"""
