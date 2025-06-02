@@ -34,19 +34,18 @@ install:
 	@sudo bash install.sh
 
 install-system:
-	@echo "🚀 Installiere Ping Monitor (System-Pakete)..."
+	@echo "📦 Installiere Ping Monitor (System-Pakete)..."
 	@sudo bash install_system.sh
 
 uninstall:
 	@echo "🗑️ Deinstalliere Ping Monitor..."
-funktioniert von Anfang an!)..."
-	@sudo bash install.sh
+	@sudo bash uninstall.sh
 
 # Service-Kontrolle
 start:
 	@echo "▶️ Starte Ping Monitor Service..."
 	@sudo systemctl start ping-monitor.service
-	@sudo bash install_systemsudo systemctl status ping-monitor.service --no-pager
+	@sudo systemctl status ping-monitor.service --no-pager
 
 stop:
 	@echo "⏹️ Stoppe Ping Monitor Service..."

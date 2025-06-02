@@ -16,9 +16,8 @@ Ein Python-basierter Ping-Monitor-Service für Linux, der kontinuierlich die Net
 
 ### Automatische Installation
 
-1. **Dateien herunterladen und  und Installation ausführen**:
+1. **Dateien herunterladen und Installation ausführen**:
    ```bash
-   # Einfach und funktioniert von Anfang an:   ```bash
    # Einfach und funktioniert von Anfang an:
    sudo bash install.sh
    ```

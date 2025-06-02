@@ -1,12 +1,11 @@
 #!/bin/bash
 
-# Ping Monitor - Robuste - Robuste Installation
+# Ping Monitor - Robuste Installation
 # Funktioniert von Anfang an, ohne Probleme
 
 set -e
 
-echo "🚀 Ping Monitor - Robuste - Robuste Installation
-# Funktioniert von Anfang an, ohne Probleme gestartet..."
+echo "🚀 Ping Monitor - Robuste Installation gestartet..."
 echo "   Dieses Skript funktioniert von Anfang an!"
 
 # Prüfen ob als root ausgeführt
@@ -21,6 +20,7 @@ INSTALL_DIR="/opt/ping-monitor"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "📂 Skript-Verzeichnis: $SCRIPT_DIR"
+echo "📁 Installations-Verzeichnis: $INSTALL_DIR"
 
 # Prüfen ob alle benötigten Dateien vorhanden sind
 echo "🔍 Prüfe benötigte Dateien..."
@@ -41,46 +41,24 @@ done
 echo "✅ Alle benötigten Dateien gefunden"
 
 # System aktualisieren und Python installieren
-echo "🐍  $INSTALL_DIR"
-
-# Prüfen ob alle benötigten Dateien vorhanden sind
-echo "🔍 Prüfe benötigte Dateien..."
-REQUIRED_FILES=(
-    "ping_monitor.py"
-    "web_interface.py" 
-    "config.py"
-    "templates/index.html"
-)
-
-for file in "${REQUIRED_FILES[@]}"; do
-    if [ ! -f "$SCRIPT_DIR/$file" ] && [ ! -d "$SCRIPT_DIR/$(dirname $file)" ]; then
-        echo "❌ Datei nicht gefunden: $file"
-        echo "   Bitte stellen Sie sicher, dass alle Dateien im Verzeichnis sind"
-        exit 1
-    fi
-done
-echo "✅ Alle benötigten Dateien gefunden"
-
-# System aktualisieren und Python installieren
-echo "🐍 Installiere Flaskn..."
+echo "🐍 Installiere Python3 und Abhängigkeiten..."
 apt update -qq
 apt install -y python3 python3-venv python3-pip python3-full curl
 
 # Installationsverzeichnis erstellen
 echo "📁 Erstelle Installationsverzeichnis..."
 rm -rf $INSTALL_DIR  # Alte Installation entfernen
-mkdir -p --quiet
-"$INSTALL_DIR
+mkdir -p $INSTALL_DIR
 
 # Dateien kopieren
 echo "📋 Kopiere Dateien..."
-cp ""$SCRIPT_DIR/ping_monitor.py" ""$INSTALL_DIR/"
+cp "$SCRIPT_DIR/ping_monitor.py" "$INSTALL_DIR/"
 cp "$SCRIPT_DIR/web_interface.py" "$INSTALL_DIR/"
-cp "$SCRIPT_DIR/config.py" ""$INSTALL_DIR/"
-cp -r "$SCRIPT_DIR/templates" ""$INSTALL_DIR/""
+cp "$SCRIPT_DIR/config.py" "$INSTALL_DIR/"
+cp -r "$SCRIPT_DIR/templates" "$INSTALL_DIR/"
 
 # requirements.txt erstellen (falls nicht vorhanden)
-echo "📦 Erstellequirements.txt..."
+echo "📦 Erstelle requirements.txt..."
 cat > "$INSTALL_DIR/requirements.txt" << 'EOF'
 Flask>=2.3.0,<3.0.0
 Werkzeug>=2.3.0,<3.0.0
@@ -97,7 +75,7 @@ echo "📦 Installiere Flask in virtueller Umgebung..."
 "$INSTALL_DIR/venv/bin/pip" install flask werkzeug --quiet
 
 # Berechtigungen setzen
-echo "🔐 Prüfe Setze Berechtigungen..."
+echo "🔐 Setze Berechtigungen..."
 chmod +x "$INSTALL_DIR/ping_monitor.py"
 chmod +x "$INSTALL_DIR/web_interface.py"
 chown -R root:root "$INSTALL_DIR"
