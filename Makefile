@@ -8,9 +8,8 @@ help:
 	@echo "🌐 Ping Monitor - Verfügbare Befehle:"
 	@echo ""
 	@echo "  📦 Installation:"
-	@echo "    make install        - Installiert den Service (virtuelle Umgebung)"
+	@echo "    make install        - Installiert den Service (funktioniert von Anfang an!)"
 	@echo "    make install-system - Installiert mit System-Paketen"
-	@echo "    make fix            - Behebt Installation-Probleme"
 	@echo "    make uninstall      - Deinstalliert den Service"
 	@echo ""
 	@echo "  🎮 Service-Kontrolle:"
@@ -31,30 +30,23 @@ help:
 
 # Installation
 install:
-	@echo "📦 Installiere Ping Monitor (virtuelle Umgebung)..."
-	@chmod +x install.sh
-	@sudo ./install.sh
+	@echo "🚀 Installiere Ping Monitor (funktioniert von Anfang an!)..."
+	@sudo bash install.sh
 
 install-system:
-	@echo "📦 Installiere Ping Monitor (System-Pakete)..."
-	@chmod +x install_system.sh
-	@sudo ./install_system.sh
-
-fix:
-	@echo "🔧 Behebe Installation-Probleme..."
-	@chmod +x fix_installation.sh
-	@sudo ./fix_installation.sh
+	@echo "🚀 Installiere Ping Monitor (System-Pakete)..."
+	@sudo bash install_system.sh
 
 uninstall:
 	@echo "🗑️ Deinstalliere Ping Monitor..."
-	@chmod +x uninstall.sh
-	@sudo ./uninstall.sh
+funktioniert von Anfang an!)..."
+	@sudo bash install.sh
 
 # Service-Kontrolle
 start:
 	@echo "▶️ Starte Ping Monitor Service..."
 	@sudo systemctl start ping-monitor.service
-	@sudo systemctl status ping-monitor.service --no-pager
+	@sudo bash install_systemsudo systemctl status ping-monitor.service --no-pager
 
 stop:
 	@echo "⏹️ Stoppe Ping Monitor Service..."

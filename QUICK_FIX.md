@@ -9,20 +9,28 @@ error: externally-managed-environment
 
 ## 🔧 Sofortige Lösung
 
-### Option 1: Fix-Skript ausführen (Empfohlen)
+### Option 1: Vollständiger Fix (Empfohlen)
+```bash
+chmod +x complete_fix.sh
+sudo ./complete_fix.sh
+```
+
+### Option 2: Fix-Skript ausführen
 ```bash
 chmod +x fix_installation.sh
 sudo ./fix_installation.sh
 ```
 
-### Option 2: System-Pakete verwenden
+### Option 3: System-Pakete verwenden
 ```bash
 chmod +x install_system.sh
 sudo ./install_system.sh
 ```
 
-### Option 3: Makefile verwenden
+### Option 4: Makefile verwenden
 ```bash
+make complete-fix
+# oder
 make fix
 ```
 

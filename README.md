@@ -16,31 +16,24 @@ Ein Python-basierter Ping-Monitor-Service für Linux, der kontinuierlich die Net
 
 ### Automatische Installation
 
-1. **Repository herunterladen**:
+1. **Dateien herunterladen und  und Installation ausführen**:
    ```bash
-   git clone <repository-url>
-   cd ping-monitor
+   # Einfach und funktioniert von Anfang an:   ```bash
+   # Einfach und funktioniert von Anfang an:
+   sudo bash install.sh
    ```
 
-2. **Installationsskript ausführen**:
+Das war's! Das Skript:
+- ✅ Prüft alle Abhängigkeiten
+- ✅ Installiert Python3 und Flask automatisch
+- ✅ Erstellt virtuelle Umgebung
+- ✅ Konfiguriert den Service
+- ✅ Startet alles automatisch
+- ✅ Testet die Installation
 
-   **Option A: Mit virtueller Umgebung (empfohlen)**:
-   ```bash
-   chmod +x install.sh
-   sudo ./install.sh
-   ```
-
-   **Option B: Mit System-Paketen**:
-   ```bash
-   chmod +x install_system.sh
-   sudo ./install_system.sh
-   ```
-
-   **Option C: Problem-Fix (falls Installation fehlschlägt)**:
-   ```bash
-   chmod +x fix_installation.sh
-   sudo ./fix_installation.sh
-   ```
+**Alternative Installationsmethoden** (falls benötigt):
+- **System-Pakete**: `sudo bash install_system.sh`
+- **Makefile**: `make install`
 
 Das Installationsskript führt automatisch folgende Schritte aus:
 - Installiert Python3 und pip (falls nicht vorhanden)

@@ -14,12 +14,25 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 INSTALL_DIR="/opt/ping-monitor"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Prüfen ob Installationsverzeichnis existiert
+# Installationsverzeichnis erstellen falls nicht vorhanden
 if [ ! -d "$INSTALL_DIR" ]; then
-    echo "❌ Installationsverzeichnis $INSTALL_DIR nicht gefunden"
-    echo "   Bitte zuerst das Installationsskript ausführen"
-    exit 1
+    echo "📁 Erstelle Installationsverzeichnis: $INSTALL_DIR"
+    mkdir -p $INSTALL_DIR
+    
+    # Dateien kopieren
+    echo "📋 Kopiere Dateien..."
+    cp $SCRIPT_DIR/ping_monitor.py $INSTALL_DIR/
+    cp $SCRIPT_DIR/web_interface.py $INSTALL_DIR/
+    cp $SCRIPT_DIR/config.py $INSTALL_DIR/
+    cp -r $SCRIPT_DIR/templates $INSTALL_DIR/
+    cp $SCRIPT_DIR/requirements.txt $INSTALL_DIR/
+    
+    # Berechtigungen setzen
+    chmod +x $INSTALL_DIR/ping_monitor.py
+    chmod +x $INSTALL_DIR/web_interface.py
+    chown -R root:root $INSTALL_DIR
 fi
 
 echo "🔧 Erstelle virtuelle Python-Umgebung..."
