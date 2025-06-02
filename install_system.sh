@@ -1,15 +1,15 @@
 #!/bin/bash
 
-# Ping Monitor Installation Script
-# Dieses Skript installiert den Ping Monitor als Linux-Systemdienst
+# Ping Monitor Installation Script (System-Pakete)
+# Alternative Installation mit System-Python-Paketen
 
 set -e
 
-echo "🚀 Ping Monitor Installation gestartet..."
+echo "🚀 Ping Monitor Installation gestartet (System-Pakete)..."
 
 # Prüfen ob als root ausgeführt
 if [ "$EUID" -ne 0 ]; then
-    echo "❌ Bitte als root ausführen (sudo ./install.sh)"
+    echo "❌ Bitte als root ausführen (sudo ./install_system.sh)"
     exit 1
 fi
 
@@ -18,17 +18,10 @@ INSTALL_DIR="/opt/ping-monitor"
 echo "📁 Erstelle Installationsverzeichnis: $INSTALL_DIR"
 mkdir -p $INSTALL_DIR
 
-# Python3 und pip prüfen/installieren
-echo "🐍 Prüfe Python3 Installation..."
-if ! command -v python3 &> /dev/null; then
-    echo "📦 Installiere Python3..."
-    apt update
-    apt install -y python3 python3-pip python3-venv python3-full
-else
-    # Stelle sicher, dass venv verfügbar ist
-    apt update
-    apt install -y python3-venv python3-full 2>/dev/null || true
-fi
+# Python3 und Flask über System-Pakete installieren
+echo "🐍 Installiere Python3 und Flask über System-Pakete..."
+apt update
+apt install -y python3 python3-flask python3-werkzeug
 
 # Dateien kopieren
 echo "📋 Kopiere Dateien..."
@@ -38,25 +31,45 @@ cp config.py $INSTALL_DIR/
 cp -r templates $INSTALL_DIR/
 cp requirements.txt $INSTALL_DIR/
 
-# Virtuelle Umgebung erstellen
-echo "🔧 Erstelle virtuelle Python-Umgebung..."
-cd $INSTALL_DIR
-python3 -m venv venv
-
-# Python-Abhängigkeiten in virtueller Umgebung installieren
-echo "📦 Installiere Python-Abhängigkeiten in virtueller Umgebung..."
-$INSTALL_DIR/venv/bin/pip install --upgrade pip
-$INSTALL_DIR/venv/bin/pip install -r requirements.txt
-
 # Berechtigungen setzen
 echo "🔐 Setze Berechtigungen..."
 chmod +x $INSTALL_DIR/ping_monitor.py
 chmod +x $INSTALL_DIR/web_interface.py
 chown -R root:root $INSTALL_DIR
 
-# Systemd-Service installieren
-echo "⚙️ Installiere Systemd-Service..."
-cp ping-monitor.service /etc/systemd/system/
+# Systemd-Service für System-Python erstellen
+echo "⚙️ Erstelle Systemd-Service für System-Python..."
+cat > /etc/systemd/system/ping-monitor.service << 'EOF'
+[Unit]
+Description=Ping Monitor Service
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/ping-monitor
+ExecStart=/usr/bin/python3 /opt/ping-monitor/web_interface.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Umgebungsvariablen
+Environment=PYTHONPATH=/opt/ping-monitor
+Environment=FLASK_ENV=production
+
+# Sicherheitseinstellungen
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/ping-monitor
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
 systemctl daemon-reload
 
 # Service aktivieren und starten

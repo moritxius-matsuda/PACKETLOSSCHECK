@@ -23,9 +23,23 @@ Ein Python-basierter Ping-Monitor-Service für Linux, der kontinuierlich die Net
    ```
 
 2. **Installationsskript ausführen**:
+
+   **Option A: Mit virtueller Umgebung (empfohlen)**:
    ```bash
    chmod +x install.sh
    sudo ./install.sh
+   ```
+
+   **Option B: Mit System-Paketen**:
+   ```bash
+   chmod +x install_system.sh
+   sudo ./install_system.sh
+   ```
+
+   **Option C: Problem-Fix (falls Installation fehlschlägt)**:
+   ```bash
+   chmod +x fix_installation.sh
+   sudo ./fix_installation.sh
    ```
 
 Das Installationsskript führt automatisch folgende Schritte aus:
@@ -176,13 +190,32 @@ sleep_time = max(0, 1.0 - elapsed)  # 1 Sekunde
 
 ## 🛠️ Troubleshooting
 
+### "externally-managed-environment" Fehler
+
+Wenn Sie den Fehler "externally-managed-environment" erhalten:
+
+```bash
+# Lösung 1: Fix-Skript ausführen
+sudo ./fix_installation.sh
+
+# Lösung 2: System-Pakete verwenden
+sudo ./install_system.sh
+
+# Lösung 3: Makefile verwenden
+make fix
+```
+
 ### Service startet nicht
 
 ```bash
 # Logs prüfen
 sudo journalctl -u ping-monitor -n 50
 
-# Manuell testen
+# Manuell testen (virtuelle Umgebung)
+cd /opt/ping-monitor
+./venv/bin/python web_interface.py
+
+# Manuell testen (System-Python)
 cd /opt/ping-monitor
 python3 web_interface.py
 ```
